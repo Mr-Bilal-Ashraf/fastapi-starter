@@ -47,7 +47,7 @@ The package comes with a structured directory layout to ensure maintainability a
 
 3. **Run the application**:
     ```bash
-    uvicorn main:app --reload
+    uvicorn app.main:app --reload
     ```
 
 ## Customization
