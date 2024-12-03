@@ -2,6 +2,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from app.utils import account_activation_email
 from app.serializers.user import UserCreate
 from app.dependencies import get_session
 from app.models.user import User
@@ -26,4 +27,5 @@ async def create_new_user(
         "email": obj.email,
         "msg": f"An Activation token is sent to {obj.email}.",
     }
+    bg_tasks.add_task(account_activation_email, db, obj)
     return JSONResponse(content=resp, status_code=status.HTTP_201_CREATED)
