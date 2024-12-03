@@ -22,5 +22,11 @@ class Settings():
     APP_LICENSE_NAME: str = os.getenv("APP_LICENSE_NAME")
     APP_LICENSE_IDENTIFIER: str = os.getenv("APP_LICENSE_IDENTIFIER")
 
+    SMTP_SERVER = os.getenv("SMTP_SERVER")
+    SMTP_PORT = int(os.getenv("SMTP_PORT"))
+    SMTP_USER = os.getenv("SMTP_USER")
+    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+    FROM_EMAIL = os.getenv("FROM_EMAIL")
+
 
 settings = Settings()
