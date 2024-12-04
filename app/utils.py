@@ -1,4 +1,5 @@
 from sqlalchemy.orm import Session
+from app.models.base import Base
 
 from app.choices import OTPChoices
 from app.models.user import User
@@ -60,3 +61,7 @@ def account_activation_email(db: Session, user: User):
     name = f"{user.first_name}{' ' + user.last_name if user.last_name else ''}"
     body = f"Hi {name}, Your OTP for account activation is: {otp}"
     return send_email(user.email, subject, body)
+
+
+def get_by_id(db: Session, model: Base, id: int):
+    return db.query(model).filter(model.id == id).first()
