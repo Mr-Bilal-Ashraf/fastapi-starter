@@ -1,6 +1,5 @@
 from sqlalchemy import Column, String, Integer, ForeignKey, DateTime
-from sqlalchemy.orm import relationship
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import relationship, DeclarativeBase
 
 from app.choices import OTPChoices
 

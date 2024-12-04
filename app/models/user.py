@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, Date
+from sqlalchemy.orm import relationship
 from passlib.context import CryptContext
 from datetime import datetime, timezone
 
@@ -22,6 +23,8 @@ class User(Base):
     is_active = Column(Boolean, default=False)
     is_superuser = Column(Boolean, default=False)
     date_joined = Column(DateTime, default=datetime.now(timezone.utc))
+
+    otps = relationship("OTP", back_populates="user")
 
     def __repr__(self):
         return f"<User(username={self.username}, email={self.email}, is_active={self.is_active})>"
