@@ -65,3 +65,12 @@ def account_activation_email(db: Session, user: User):
 
 def get_by_id(db: Session, model: Base, id: int):
     return db.query(model).filter(model.id == id).first()
+
+
+def delete_by_id(db: Session, model: Base, id: int):
+    obj = db.query(model).filter(model.id == id).first()
+    if obj:
+        db.delete(obj)
+        db.commit()
+        return True
+    return False
