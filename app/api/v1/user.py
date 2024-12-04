@@ -2,8 +2,8 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
+from app.serializers.user import UserCreateSer, UserLoginSer
 from app.utils import account_activation_email
-from app.serializers.user import UserCreate
 from app.dependencies import get_session
 from app.models.user import User
 
@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post("v1/users/create/")
 async def create_new_user(
-    user: UserCreate, bg_tasks: BackgroundTasks, db: Session = Depends(get_session)
+    user: UserCreateSer, bg_tasks: BackgroundTasks, db: Session = Depends(get_session)
 ):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
@@ -29,3 +29,49 @@ async def create_new_user(
     }
     bg_tasks.add_task(account_activation_email, db, obj)
     return JSONResponse(content=resp, status_code=status.HTTP_201_CREATED)
+
+
+@router.post("v1/users/login/")
+async def login(user: UserLoginSer, bg_tasks: BackgroundTasks, db: Session = Depends(get_session)):
+    db_user = db.query(User).filter(User.email == user.email).first()
+    if not db_user:
+        return JSONResponse(
+            content={
+                "message": "No user matching the credentials.",
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    if not db_user.is_active:
+        return JSONResponse(
+            content={
+                "active": False,
+                "user": db_user.id,
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    if db_user.deleted:
+        return JSONResponse(
+            content={
+                "deleted": True,
+                "user": db_user.id,
+                "message": "This account is deleted."
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    if not db_user.verify_password(user.password):
+        return JSONResponse(
+            content={
+                "message": "No user matching the credentials.",
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
+    if db_user.two_factor:
+        # bg_tasks.add_task(account_activation_email, db, db_user)
+        return JSONResponse(
+            content={
+                "two_factor": True,
+                "user": db_user.id,
+                "message": "A two factor OTP is sent to your mail."
+            },
+            status_code=status.HTTP_400_BAD_REQUEST,
+        )
