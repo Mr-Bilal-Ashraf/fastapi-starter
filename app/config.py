@@ -22,11 +22,10 @@ class Settings():
     APP_LICENSE_NAME: str = os.getenv("APP_LICENSE_NAME")
     APP_LICENSE_IDENTIFIER: str = os.getenv("APP_LICENSE_IDENTIFIER")
 
-    SMTP_SERVER = os.getenv("SMTP_SERVER")
-    SMTP_PORT = int(os.getenv("SMTP_PORT"))
-    SMTP_USER = os.getenv("SMTP_USER")
-    SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
-    FROM_EMAIL = os.getenv("FROM_EMAIL")
+    MAILJET_API_PUB: str = os.getenv("MAILJET_API_PUB")
+    MAILJET_API_PRI: str = os.getenv("MAILJET_API_PRI")
+    MAILJET_SENDER_EMAIL: str = os.getenv("MAILJET_SENDER_EMAIL")
+    MAILJET_SENDER_NAME: str = os.getenv("MAILJET_SENDER_NAME")
 
 
 settings = Settings()
