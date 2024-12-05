@@ -6,11 +6,9 @@ from app.models.user import User
 from app.models.base import OTP
 from app.config import settings
 
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from random import randint
 
-import smtplib
+from mailjet_rest import Client
 
 
 def generate_unique_token(db: Session):
@@ -32,27 +30,31 @@ def create_otp(db: Session, user_id: int, used_for: str):
 
 
 def send_email(to_email: str, subject: str, body: str):
-    """
-    Following error have to be fixed:
+    mailjet = Client(
+        auth=(settings.MAILJET_API_PUB, settings.MAILJET_API_PRI), version="v3.1"
+    )
 
-    Error sending email: (535, b'5.7.8 Username and Password not accepted. 
-    For more information, go to\n5.7.8  https://support.google.com/mail/?p=BadCredentials 4fb4d7f45d1cf-5d097db0a6esm5835969a12.27 - gsmtp')
-    """
-    msg = MIMEMultipart()
-    msg['From'] = settings.FROM_EMAIL
-    msg['To'] = to_email
-    msg['Subject'] = subject
+    msg = {
+        "Messages": [
+            {
+                "From": {
+                    "Email": settings.MAILJET_SENDER_EMAIL,
+                    "Name": settings.MAILJET_SENDER_NAME,
+                },
+                "To": [{"Email": to_email}],
+                "Subject": subject,
+                "TextPart": body,
+                #   "HTMLPart": "<h3>Dear passenger 1, welcome to <a href=\"https://www.mailjet.com/\">Mailjet</a>!</h3><br />May the delivery force be with you!"
+            }
+        ]
+    }
 
-    msg.attach(MIMEText(body, 'plain'))
-
-    try:
-        with smtplib.SMTP_SSL(settings.SMTP_SERVER, settings.SMTP_PORT) as server:
-            server.login(settings.SMTP_USER, settings.SMTP_PASSWORD)
-            server.sendmail(settings.FROM_EMAIL, to_email, msg.as_string())
-    except Exception as e:
-        print(f"Error sending email: {e}")
-        return False
-    return True
+    resp = mailjet.send.create(data=msg)
+    if resp.status_code == 200:
+        print(f"\nemail sent to '{to_email}' successfully\n\n")
+    else:
+        print(f"\nemail sent to '{to_email}' failed\n\n")
+        print(resp.json())
 
 
 def account_activation_email(db: Session, user: User):
