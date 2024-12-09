@@ -2,9 +2,9 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 
-from app.serializers.user import UserCreateSer, UserLoginSer
-from app.utils import account_activation_email
-from app.dependencies import get_session
+from app.dependencies import SessionDep, access_security, refresh_security
+from app.serializers.user import UserCreateSer, UserLoginSer, MyProfileSer
+from app.utils import account_activation_email, get_by_id
 from app.models.user import User
 
 router = APIRouter()
@@ -12,7 +12,7 @@ router = APIRouter()
 
 @router.post("v1/users/create/")
 async def create_new_user(
-    user: UserCreateSer, bg_tasks: BackgroundTasks, db: Session = Depends(get_session)
+    db: SessionDep, user: UserCreateSer, bg_tasks: BackgroundTasks
 ):
     db_user = db.query(User).filter(User.email == user.email).first()
     if db_user:
@@ -31,8 +31,9 @@ async def create_new_user(
     return JSONResponse(content=resp, status_code=status.HTTP_201_CREATED)
 
 
+async def activate_user_account(db: SessionDep, user_id: int):
 @router.post("v1/users/login/")
-async def login(user: UserLoginSer, bg_tasks: BackgroundTasks, db: Session = Depends(get_session)):
+async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user:
         return JSONResponse(
