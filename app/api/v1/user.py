@@ -1,11 +1,15 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Security, status
 from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
 
 from app.dependencies import SessionDep, access_security, refresh_security
 from app.serializers.user import UserCreateSer, UserLoginSer, MyProfileSer
 from app.utils import account_activation_email, get_by_id
 from app.models.user import User
+from app.config import settings
+
+from fastapi_jwt import JwtAuthorizationCredentials
+
+from datetime import timedelta
 
 router = APIRouter()
 
@@ -82,6 +86,22 @@ async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
             "access_token": access_token,
             "refresh_token": refresh_token,
             "user": subject,
+        },
+        status_code=status.HTTP_200_OK,
+    )
+
+@router.post("v1/users/refresh")
+def refresh_tokens(credentials: JwtAuthorizationCredentials = Security(refresh_security)):
+    access_token = access_security.create_access_token(subject=credentials.subject)
+    refresh_token = refresh_security.create_refresh_token(
+        subject=credentials.subject,
+        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE)
+    )
+
+    return JSONResponse(
+        content={
+            "access_token": access_token,
+            "refresh_token": refresh_token
         },
         status_code=status.HTTP_200_OK,
     )
