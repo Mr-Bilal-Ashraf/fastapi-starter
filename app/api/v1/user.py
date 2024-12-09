@@ -87,4 +87,19 @@ async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
     )
 
 
+
+@router.post("v1/users/delete/{pk}/", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(db: SessionDep, pk: int):
+    db_user = get_by_id(db, User, pk)
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
+    if db_user.deleted:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="User already deleted"
+        )
+
+    db_user.deleted = True
+    db.commit()
+    return None
