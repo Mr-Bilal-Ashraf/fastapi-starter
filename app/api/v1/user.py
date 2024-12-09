@@ -60,18 +60,31 @@ async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
         )
 
     if db_user.two_factor:
-        # bg_tasks.add_task(account_activation_email, db, db_user)
-        return JSONResponse(
-            content={
-                "two_factor": True,
-                "user": db_user.id,
-                "message": "A two factor OTP is sent to your mail."
-            },
-            status_code=status.HTTP_400_BAD_REQUEST,
         # bg_tasks.add_task(account_activation_email, db, db_user)  # Uncomment when 2FA is implemented
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A two-factor OTP has been sent to your email.",
         )
+
+    subject = {
+        "id": db_user.id,
+        "first_name": db_user.first_name,
+        "last_name": db_user.last_name,
+    }
+    access_token = access_security.create_access_token(subject=subject)
+    refresh_token = refresh_security.create_refresh_token(subject=subject)
+
+    subject["is_superuser"] = db_user.is_superuser
+    subject["email"] = db_user.email
+
+    return JSONResponse(
+        content={
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": subject,
+        },
+        status_code=status.HTTP_200_OK,
+    )
+
 
         )
