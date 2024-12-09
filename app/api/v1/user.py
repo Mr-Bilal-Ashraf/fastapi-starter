@@ -36,36 +36,29 @@ async def activate_user_account(db: SessionDep, user_id: int):
 async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user:
-        return JSONResponse(
-            content={
-                "message": "No user matching the credentials.",
-            },
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No user matching the credentials.",
         )
+
     if not db_user.is_active:
-        return JSONResponse(
-            content={
-                "active": False,
-                "user": db_user.id,
-            },
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is not active.",
         )
+
     if db_user.deleted:
-        return JSONResponse(
-            content={
-                "deleted": True,
-                "user": db_user.id,
-                "message": "This account is deleted."
-            },
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This account is deleted.",
         )
+
     if not db_user.verify_password(user.password):
-        return JSONResponse(
-            content={
-                "message": "No user matching the credentials.",
-            },
+        raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid credentials.",
         )
+
     if db_user.two_factor:
         # bg_tasks.add_task(account_activation_email, db, db_user)
         return JSONResponse(
@@ -75,4 +68,10 @@ async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
                 "message": "A two factor OTP is sent to your mail."
             },
             status_code=status.HTTP_400_BAD_REQUEST,
+        # bg_tasks.add_task(account_activation_email, db, db_user)  # Uncomment when 2FA is implemented
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A two-factor OTP has been sent to your email.",
+        )
+
         )
