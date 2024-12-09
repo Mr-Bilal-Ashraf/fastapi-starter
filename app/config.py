@@ -27,5 +27,8 @@ class Settings():
     MAILJET_SENDER_EMAIL: str = os.getenv("MAILJET_SENDER_EMAIL")
     MAILJET_SENDER_NAME: str = os.getenv("MAILJET_SENDER_NAME")
 
+    ACCESS_TOKEN_EXPIRE: int = int(os.getenv("ACCESS_TOKEN_EXPIRE", 1))
+    REFRESH_TOKEN_EXPIRE: int = int(os.getenv("ACCESS_TOKEN_EXPIRE", 30))
+
 
 settings = Settings()
