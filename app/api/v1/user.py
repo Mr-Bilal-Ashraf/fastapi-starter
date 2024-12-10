@@ -1,7 +1,7 @@
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Security, status
 from fastapi.responses import JSONResponse
 
-from app.dependencies import SessionDep, access_security, refresh_security
+from app.dependencies import JwtAuthDep, SessionDep, access_security, refresh_security
 from app.serializers.user import UserCreateSer, UserLoginSer, MyProfileSer
 from app.utils import account_activation_email, get_by_id
 from app.models.user import User
@@ -111,6 +111,8 @@ def refresh_tokens(credentials: JwtAuthorizationCredentials = Security(refresh_s
 @router.post("v1/users/delete/{pk}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(db: SessionDep, pk: int):
     db_user = get_by_id(db, User, pk)
+async def delete_user(db: SessionDep, auth: JwtAuthDep):
+    db_user = get_by_id(db, User, auth["id"])
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
