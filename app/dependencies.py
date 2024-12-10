@@ -1,11 +1,15 @@
-from fastapi import Depends
+from fastapi import Depends, HTTPException, Security, status
 
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine
 
 from app.config import settings
 
-from fastapi_jwt import JwtAccessBearerCookie, JwtRefreshBearer
+from fastapi_jwt import (
+    JwtAuthorizationCredentials,
+    JwtAccessBearerCookie,
+    JwtRefreshBearer,
+)
 
 from datetime import timedelta
 from typing import Annotated
@@ -30,4 +34,16 @@ refresh_security = JwtRefreshBearer(
     refresh_expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE),
 )
 
+
+def get_jwt_credentials(
+    credentials: JwtAuthorizationCredentials = Security(access_security),
+):
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token"
+        )
+    return credentials
+
+
+JwtAuthDep = Annotated[JwtAuthorizationCredentials, Depends(get_jwt_credentials)]
 SessionDep = Annotated[Session, Depends(get_session)]
