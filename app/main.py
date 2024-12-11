@@ -42,7 +42,7 @@ def configure_routing():
 
     app.mount("/static", staticfiles.StaticFiles(directory="app/static"), name="static")
     # app.include_router(base.router, prefix="/base", tags=["base"])
-    app.include_router(user.router, prefix="/user", tags=["user"])
+    app.include_router(user.router, prefix="/api", tags=["user"])
 
 @app.on_event("startup")
 def startup_event():

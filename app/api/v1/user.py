@@ -14,7 +14,7 @@ from datetime import datetime, timezone, timedelta
 router = APIRouter()
 
 
-@router.post("v1/users/create/")
+@router.post("/v1/users/create/")
 async def create_new_user(
     db: SessionDep, user: UserCreateSer, bg_tasks: BackgroundTasks
 ):
@@ -35,6 +35,7 @@ async def create_new_user(
     return JSONResponse(content=resp, status_code=status.HTTP_201_CREATED)
 
 
+@router.post("/v1/users/activate/")
 async def activate_user_account(db: SessionDep, user_id: int):
 @router.post("v1/users/login/")
 async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
@@ -90,7 +91,7 @@ async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
         status_code=status.HTTP_200_OK,
     )
 
-@router.post("v1/users/refresh")
+@router.post("/v1/users/refresh/token/")
 def refresh_tokens(credentials: JwtAuthorizationCredentials = Security(refresh_security)):
     access_token = access_security.create_access_token(subject=credentials.subject)
     refresh_token = refresh_security.create_refresh_token(
@@ -111,6 +112,7 @@ def refresh_tokens(credentials: JwtAuthorizationCredentials = Security(refresh_s
 @router.post("v1/users/delete/{pk}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(db: SessionDep, pk: int):
     db_user = get_by_id(db, User, pk)
+@router.delete("/v1/users/me/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(db: SessionDep, auth: JwtAuthDep):
     db_user = get_by_id(db, User, auth["id"])
     if not db_user:
