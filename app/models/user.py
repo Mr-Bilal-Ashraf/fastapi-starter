@@ -24,6 +24,7 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
     date_joined = Column(DateTime, default=datetime.now(timezone.utc))
     deleted = Column(Boolean, default=False)
+    deleted_at = Column(DateTime, nullable=True)
     two_factor = Column(Boolean, default=False)
 
     otps = relationship("OTP", back_populates="user")
