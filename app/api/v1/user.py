@@ -9,7 +9,7 @@ from app.config import settings
 
 from fastapi_jwt import JwtAuthorizationCredentials
 
-from datetime import timedelta
+from datetime import datetime, timezone, timedelta
 
 router = APIRouter()
 
@@ -122,6 +122,8 @@ async def delete_user(db: SessionDep, auth: JwtAuthDep):
             status_code=status.HTTP_400_BAD_REQUEST, detail="User already deleted"
         )
 
+    db_user.deleted_at = datetime.now(timezone.utc)
+    db_user.is_active = False
     db_user.deleted = True
     db.commit()
     return None
