@@ -42,7 +42,11 @@ The package comes with a structured directory layout to ensure maintainability a
 
 2. **Install dependencies**:
     ```bash
-    pip install -r requirements.txt
+    pip install "fastapi[standard]"
+    pip install "fastapi-jwt[authlib]"
+    pip install mailjet_rest
+    pip install alembic
+    pip install passlib
     ```
 
 3. **Run the application**:
