@@ -108,6 +108,20 @@ def refresh_tokens(credentials: JwtAuthorizationCredentials = Security(refresh_s
     )
 
 
+@router.post("/v1/users/resend_activation_token/")
+async def resend_activation_token(
+    db: SessionDep, email: str, bg_tasks: BackgroundTasks
+):
+    db_user = db.query(User).filter(User.email == email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    if db_user.is_active:
+        raise HTTPException(status_code=400, detail="User is already active.")
+    bg_tasks.add_task(account_activation_email, db, db_user)
+    return JSONResponse(
+        content={"detail": "Activation token sent."}, status_code=status.HTTP_200_OK
+    )
+
 
 @router.post("v1/users/delete/{pk}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(db: SessionDep, pk: int):
