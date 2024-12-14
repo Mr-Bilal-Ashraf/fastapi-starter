@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 
 from app.dependencies import JwtAuthDep, SessionDep, access_security, refresh_security
 from app.serializers.user import UserCreateSer, UserLoginSer, MyProfileSer
-from app.utils import account_activation_email, get_by_id
+from app.utils import account_activation_email, get_by_id, db_commit
 from app.models.user import User
 from app.config import settings
 
@@ -126,9 +126,23 @@ async def resend_activation_token(
 @router.post("v1/users/delete/{pk}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(db: SessionDep, pk: int):
     db_user = get_by_id(db, User, pk)
+@router.post("/v1/users/toggle_two_factor/", status_code=status.HTTP_200_OK)
+async def toggle_two_factor(db: SessionDep, auth: JwtAuthDep):
+    db_user: User = get_by_id(db, User, auth["id"])
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    db_user.two_factor = not db_user.two_factor
+    db_commit(db)
+    return JSONResponse(
+        content={"two_factor": db_user.two_factor}, status_code=status.HTTP_200_OK
+    )
+
+
 @router.delete("/v1/users/me/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(db: SessionDep, auth: JwtAuthDep):
-    db_user = get_by_id(db, User, auth["id"])
+    db_user: User = get_by_id(db, User, auth["id"])
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
