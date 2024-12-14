@@ -1,3 +1,5 @@
+from fastapi import HTTPException, status
+
 from sqlalchemy.orm import Session
 from app.models.base import Base
 
@@ -76,3 +78,14 @@ def delete_by_id(db: Session, model: Base, id: int):
         db.commit()
         return True
     return False
+
+
+def db_commit(db: Session):
+    try:
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update two-factor status",
+        )
