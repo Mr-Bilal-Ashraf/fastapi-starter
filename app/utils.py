@@ -75,7 +75,7 @@ def delete_by_id(db: Session, model: Base, id: int):
     obj = db.query(model).filter(model.id == id).first()
     if obj:
         db.delete(obj)
-        db.commit()
+        db_commit(db)
         return True
     return False
 
@@ -87,5 +87,5 @@ def db_commit(db: Session):
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update two-factor status",
+            detail="Failed, due to internal server error, please try again later",
         )

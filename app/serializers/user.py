@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, EmailStr
 
 from datetime import datetime
 
@@ -6,7 +6,7 @@ from datetime import datetime
 class UserResponseSer(BaseModel):
     id: int
     # username: str
-    email: str
+    email: EmailStr
     first_name: str
     last_name: str
     date_of_birth: str = None
@@ -22,12 +22,12 @@ class UserResponseSer(BaseModel):
 
 class UserCreateSer(BaseModel):
     # username: str = Field(min_length=1, max_length=50)
-    email: str = Field(min_length=15, max_length=70)
+    email: EmailStr = Field(min_length=15, max_length=70)
     password: str = Field(min_length=8, max_length=50)
     first_name: str = Field(min_length=5, max_length=150)
     last_name: str | None = Field(min_length=5, max_length=150)
 
 
 class UserLoginSer(BaseModel):
-    email: str = Field(min_length=15, max_length=70)
+    email: EmailStr = Field(min_length=15, max_length=70)
     password: str = Field(min_length=8, max_length=50)
