@@ -103,30 +103,24 @@ async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
     subject["is_superuser"] = db_user.is_superuser
     subject["email"] = db_user.email
 
-    return JSONResponse(
-        content={
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "user": subject,
-        },
-        status_code=status.HTTP_200_OK,
-    )
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": subject,
+    }
+
 
 @router.post("/v1/users/refresh/token/")
-def refresh_tokens(credentials: JwtAuthorizationCredentials = Security(refresh_security)):
+def refresh_tokens(
+    credentials: JwtAuthorizationCredentials = Security(refresh_security),
+):
     access_token = access_security.create_access_token(subject=credentials.subject)
     refresh_token = refresh_security.create_refresh_token(
         subject=credentials.subject,
-        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE)
+        expires_delta=timedelta(days=settings.REFRESH_TOKEN_EXPIRE),
     )
 
-    return JSONResponse(
-        content={
-            "access_token": access_token,
-            "refresh_token": refresh_token
-        },
-        status_code=status.HTTP_200_OK,
-    )
+    return {"access_token": access_token, "refresh_token": refresh_token}
 
 
 @router.post("/v1/users/resend_activation_token/")
@@ -139,14 +133,14 @@ async def resend_activation_token(
     if db_user.is_active:
         raise HTTPException(status_code=400, detail="User is already active.")
     bg_tasks.add_task(account_activation_email, db, db_user)
-    return JSONResponse(
-        content={"detail": "Activation token sent."}, status_code=status.HTTP_200_OK
-    )
+    return {"detail": "Activation token sent."}
+
 
 
 @router.post("v1/users/delete/{pk}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(db: SessionDep, pk: int):
     db_user = get_by_id(db, User, pk)
+
 @router.post("/v1/users/toggle_two_factor/", status_code=status.HTTP_200_OK)
 async def toggle_two_factor(db: SessionDep, auth: JwtAuthDep):
     db_user: User = get_by_id(db, User, auth["id"])
@@ -156,9 +150,8 @@ async def toggle_two_factor(db: SessionDep, auth: JwtAuthDep):
         )
     db_user.two_factor = not db_user.two_factor
     db_commit(db)
-    return JSONResponse(
-        content={"two_factor": db_user.two_factor}, status_code=status.HTTP_200_OK
-    )
+    return {"two_factor": db_user.two_factor}
+
 
 
 @router.delete("/v1/users/me/", status_code=status.HTTP_204_NO_CONTENT)
@@ -176,5 +169,5 @@ async def delete_user(db: SessionDep, auth: JwtAuthDep):
     db_user.deleted_at = datetime.now(timezone.utc)
     db_user.is_active = False
     db_user.deleted = True
-    db.commit()
+    db_commit(db)
     return None
