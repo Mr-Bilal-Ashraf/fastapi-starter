@@ -2,9 +2,15 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Security, status
 from fastapi.responses import JSONResponse
 
 from app.dependencies import JwtAuthDep, SessionDep, access_security, refresh_security
-from app.serializers.user import UserCreateSer, UserLoginSer, MyProfileSer
+from app.serializers.user import (
+    UserCreateSer,
+    UserLoginSer,
+    MyProfileSer,
+    UserActivateSer,
+)
 from app.utils import account_activation_email, get_by_id, db_commit
 from app.models.user import User
+from app.models.base import OTP
 from app.config import settings
 
 from fastapi_jwt import JwtAuthorizationCredentials
@@ -36,8 +42,23 @@ async def create_new_user(
 
 
 @router.post("/v1/users/activate/")
-async def activate_user_account(db: SessionDep, user_id: int):
-@router.post("v1/users/login/")
+async def activate_user_account(db: SessionDep, data: UserActivateSer):
+    db_user = db.query(User).filter(User.email == data.email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    if db_user.is_active:
+        raise HTTPException(status_code=400, detail="User already active.")
+
+    otp_result, otp_message = OTP.verify_otp(db, db_user, data.otp)
+    if otp_result != 1:
+        raise HTTPException(status_code=400, detail=otp_message)
+
+    db_user.is_active = True
+    db_commit(db)
+    return {"detail": "User account successfully activated."}
+
+
+@router.post("/v1/users/login/")
 async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
     db_user = db.query(User).filter(User.email == user.email).first()
     if not db_user:
