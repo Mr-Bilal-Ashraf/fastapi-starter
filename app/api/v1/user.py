@@ -157,6 +157,20 @@ async def resend_activation_token(
     return {"detail": "Activation token sent."}
 
 
+@router.post("/v1/users/reset_password/", status_code=status.HTTP_204_NO_CONTENT)
+async def reset_password(
+    db: SessionDep,
+    auth: JwtAuthDep,
+    new_password: str = Body(embed=True, min_length=8, max_length=50),
+):
+    db_user: User = get_by_id(db, User, auth["id"])
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    db_user.set_password(new_password)
+    db_commit(db)
+    return None
 
 @router.post("v1/users/delete/{pk}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(db: SessionDep, pk: int):
