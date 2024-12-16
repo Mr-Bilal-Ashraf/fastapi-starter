@@ -66,6 +66,19 @@ async def activate_user_account(db: SessionDep, data: UserActivateSer):
     return {"detail": "User account successfully activated."}
 
 
+@router.post("/v1/users/resend_activation_token/")
+async def resend_activation_token(
+    db: SessionDep, bg_tasks: BackgroundTasks, email: EmailStr = Body()
+):
+    db_user = db.query(User).filter(User.email == email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+    if db_user.is_active:
+        raise HTTPException(status_code=400, detail="User is already active.")
+    bg_tasks.add_task(account_activation_email, db, db_user)
+    return {"detail": "Activation token sent."}
+
+
 @router.post("/v1/users/login/")
 async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
     db_user = db.query(User).filter(User.email == user.email).first()
