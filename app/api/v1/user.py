@@ -88,16 +88,16 @@ async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
             detail="No user matching the credentials.",
         )
 
-    if not db_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is not active.",
-        )
-
     if db_user.deleted:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This account is deleted.",
+        )
+
+    if not db_user.is_active:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="User is not active.",
         )
 
     if not db_user.verify_password(user.password):
@@ -147,14 +147,16 @@ def refresh_tokens(
 @router.post("/v1/users/resend_activation_token/")
 async def resend_activation_token(
     db: SessionDep, email: str, bg_tasks: BackgroundTasks
+@router.post("/v1/users/request_forgot_password/", status_code=status.HTTP_200_OK)
+async def request_forgot_password(
+    db: SessionDep, bg_tasks: BackgroundTasks, email: EmailStr = Body(embed=True)
 ):
     db_user = db.query(User).filter(User.email == email).first()
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found.")
-    if db_user.is_active:
-        raise HTTPException(status_code=400, detail="User is already active.")
-    bg_tasks.add_task(account_activation_email, db, db_user)
-    return {"detail": "Activation token sent."}
+
+    bg_tasks.add_task(email_forgot_password_token, db, db_user)
+    return None
 
 
 @router.post("/v1/users/reset_password/", status_code=status.HTTP_204_NO_CONTENT)
