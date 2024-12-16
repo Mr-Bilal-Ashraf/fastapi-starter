@@ -1,5 +1,7 @@
-from fastapi import APIRouter, BackgroundTasks, HTTPException, Security, status
+from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, Security, status
 from fastapi.responses import JSONResponse
+
+from pydantic import EmailStr
 
 from app.dependencies import JwtAuthDep, SessionDep, access_security, refresh_security
 from app.serializers.user import (
@@ -7,8 +9,14 @@ from app.serializers.user import (
     UserLoginSer,
     MyProfileSer,
     UserActivateSer,
+    UserForgotPasswordSer,
 )
-from app.utils import account_activation_email, get_by_id, db_commit
+from app.utils import (
+    account_activation_email,
+    email_forgot_password_token,
+    get_by_id,
+    db_commit,
+)
 from app.models.user import User
 from app.models.base import OTP
 from app.config import settings
@@ -49,7 +57,7 @@ async def activate_user_account(db: SessionDep, data: UserActivateSer):
     if db_user.is_active:
         raise HTTPException(status_code=400, detail="User already active.")
 
-    otp_result, otp_message = OTP.verify_otp(db, db_user, data.otp)
+    otp_result, otp_message = OTP.verify_otp(db, db_user, data.otp, v_time=320)
     if otp_result != 1:
         raise HTTPException(status_code=400, detail=otp_message)
 
