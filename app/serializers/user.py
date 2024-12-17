@@ -40,5 +40,9 @@ class UserActivateSer(BaseModel):
 
 class UserForgotPasswordSer(BaseModel):
     password: str = Field(min_length=8, max_length=50)
-    otp: str
+
+
+class ValidateTwoFactorSer(UserActivateSer):
+    pass
+
 

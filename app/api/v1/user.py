@@ -177,9 +177,32 @@ async def reset_password(
     db_commit(db)
     return None
 
-@router.post("v1/users/delete/{pk}/", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(db: SessionDep, pk: int):
-    db_user = get_by_id(db, User, pk)
+
+@router.post("/v1/users/validate_two_factor/", status_code=status.HTTP_200_OK)
+async def validate_two_factor(db: SessionDep, data: ValidateTwoFactorSer):
+    db_user = db.query(User).filter(User.email == data.email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    otp_result, otp_message = OTP.verify_otp(
+        db, db_user, data.otp, OTPChoices.TWO_FACTOR, 120
+    )
+    if otp_result != 1:
+        raise HTTPException(status_code=400, detail=otp_message)
+
+    subject = {
+        "id": db_user.id,
+        "first_name": db_user.first_name,
+        "last_name": db_user.last_name,
+    }
+    access_token = access_security.create_access_token(subject=subject)
+    refresh_token = refresh_security.create_refresh_token(subject=subject)
+    return {
+        "access_token": access_token,
+        "refresh_token": refresh_token,
+        "user": subject,
+    }
+
 
 @router.post("/v1/users/resend_two_factor/", status_code=status.HTTP_200_OK)
 async def resend_two_factor(
