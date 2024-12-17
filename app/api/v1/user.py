@@ -5,11 +5,12 @@ from pydantic import EmailStr
 
 from app.dependencies import JwtAuthDep, SessionDep, access_security, refresh_security
 from app.serializers.user import (
+    UserForgotPasswordSer,
+    ValidateTwoFactorSer,
+    UserActivateSer,
     UserCreateSer,
     UserLoginSer,
     MyProfileSer,
-    UserActivateSer,
-    UserForgotPasswordSer,
 )
 from app.utils import (
     email_forgot_password_token,
@@ -18,6 +19,7 @@ from app.utils import (
     get_by_id,
     db_commit,
 )
+from app.choices import OTPChoices
 from app.models.user import User
 from app.models.base import OTP
 from app.config import settings
@@ -178,6 +180,24 @@ async def reset_password(
 @router.post("v1/users/delete/{pk}/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(db: SessionDep, pk: int):
     db_user = get_by_id(db, User, pk)
+
+@router.post("/v1/users/resend_two_factor/", status_code=status.HTTP_200_OK)
+async def resend_two_factor(
+    db: SessionDep, bg_tasks: BackgroundTasks, email: EmailStr = Body()
+):
+    db_user = db.query(User).filter(User.email == email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    if not db_user.two_factor:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Two factor authentication is disabled.",
+        )
+
+    bg_tasks.add_task(two_factor_token_email, db, db_user)
+    return {"detail": "Two factor OTP sent."}
+
 
 @router.post("/v1/users/toggle_two_factor/", status_code=status.HTTP_200_OK)
 async def toggle_two_factor(db: SessionDep, auth: JwtAuthDep):

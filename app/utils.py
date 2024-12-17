@@ -79,11 +79,11 @@ def two_factor_token_email(db: Session, user: User):
     otp = create_otp(db, user.id, OTPChoices.TWO_FACTOR)
     subject = "Your FastAPI Two-Factor Authentication (2FA) Token..."
     name = f"{user.first_name}{' ' + user.last_name if user.last_name else ''}"
-    body = f"Hi {name}, Use this OTP: {otp} to pass through Two-Factor Authentication (2FA)"
+    body = f"Hi {name}, Use this OTP: {otp} to pass through Two-Factor Authentication (2FA). This OTP is valid for next 2 mins."
     return send_email(user.email, subject, body)
 
 
-#↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DB Utilities ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
+# ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DB Utilities ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓
 
 
 def get_by_id(db: Session, model: Base, id: int):
