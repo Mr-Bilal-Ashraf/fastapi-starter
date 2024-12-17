@@ -63,7 +63,15 @@ def account_activation_email(db: Session, user: User):
     otp = create_otp(db, user.id, OTPChoices.ACCOUNT_ACTIVATION)
     subject = "FastAPI Account Activation Token"
     name = f"{user.first_name}{' ' + user.last_name if user.last_name else ''}"
-    body = f"Hi {name}, Your OTP for account activation is: {otp}"
+    body = f"Hi {name}, Your OTP for account activation is: {otp}. This OTP is valid for next 5 mins."
+    return send_email(user.email, subject, body)
+
+
+def email_forgot_password_token(db: Session, user: User):
+    otp = create_otp(db, user.id, OTPChoices.FORGOT_PASSWORD)
+    subject = "OTP to update your FastAPI Account password..."
+    name = f"{user.first_name}{' ' + user.last_name if user.last_name else ''}"
+    body = f"Hi {name}, Use this OTP: {otp} to update your password. This OTP is valid for next 2 mins."
     return send_email(user.email, subject, body)
 
 
