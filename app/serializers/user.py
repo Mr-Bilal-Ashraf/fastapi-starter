@@ -35,4 +35,10 @@ class UserLoginSer(BaseModel):
 
 class UserActivateSer(BaseModel):
     email: EmailStr = Field(min_length=15, max_length=70)
-    otp: str = Field(min_length=6, max_length=6)
+    otp: str
+
+
+class UserForgotPasswordSer(BaseModel):
+    password: str = Field(min_length=8, max_length=50)
+    otp: str
+
