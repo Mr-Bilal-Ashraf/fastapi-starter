@@ -12,8 +12,9 @@ from app.serializers.user import (
     UserForgotPasswordSer,
 )
 from app.utils import (
-    account_activation_email,
     email_forgot_password_token,
+    account_activation_email,
+    two_factor_token_email,
     get_by_id,
     db_commit,
 )
@@ -107,7 +108,7 @@ async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
         )
 
     if db_user.two_factor:
-        # bg_tasks.add_task(account_activation_email, db, db_user)  # Uncomment when 2FA is implemented
+        bg_tasks.add_task(two_factor_token_email, db, db_user)
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A two-factor OTP has been sent to your email.",
