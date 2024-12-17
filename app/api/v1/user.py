@@ -147,9 +147,23 @@ def refresh_tokens(
     return {"access_token": access_token, "refresh_token": refresh_token}
 
 
-@router.post("/v1/users/resend_activation_token/")
-async def resend_activation_token(
-    db: SessionDep, email: str, bg_tasks: BackgroundTasks
+@router.post("/v1/users/reset_forgot_password/", status_code=status.HTTP_200_OK)
+async def reset_forgot_password(db: SessionDep, data: UserForgotPasswordSer):
+    db_user = db.query(User).filter(User.email == data.email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    otp_result, otp_message = OTP.verify_otp(
+        db, db_user, data.otp, OTPChoices.FORGOT_PASSWORD, 120
+    )
+    if otp_result != 1:
+        raise HTTPException(status_code=400, detail=otp_message)
+
+    db_user.set_password(data.password)
+    db_commit(db)
+    return {"detail": "Password updated successfully."}
+
+
 @router.post("/v1/users/request_forgot_password/", status_code=status.HTTP_200_OK)
 async def request_forgot_password(
     db: SessionDep, bg_tasks: BackgroundTasks, email: EmailStr = Body(embed=True)
