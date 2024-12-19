@@ -7,10 +7,10 @@ from app.dependencies import JwtAuthDep, SessionDep, access_security, refresh_se
 from app.serializers.user import (
     UserForgotPasswordSer,
     ValidateTwoFactorSer,
+    UserResponseSer,
     UserActivateSer,
     UserCreateSer,
     UserLoginSer,
-    MyProfileSer,
 )
 from app.utils import (
     email_forgot_password_token,
@@ -236,7 +236,7 @@ async def resend_two_factor(
     return {"detail": "Two factor OTP sent."}
 
 
-@router.post("/v1/users/toggle_two_factor/", status_code=status.HTTP_200_OK)
+@router.get("/v1/users/toggle_two_factor/", status_code=status.HTTP_200_OK)
 async def toggle_two_factor(db: SessionDep, auth: JwtAuthDep):
     db_user: User = get_by_id(db, User, auth["id"])
     if not db_user:
@@ -247,6 +247,15 @@ async def toggle_two_factor(db: SessionDep, auth: JwtAuthDep):
     db_commit(db)
     return {"two_factor": db_user.two_factor}
 
+
+@router.get("/v1/users/me/", response_model=UserResponseSer)
+async def my_profile(db: SessionDep, auth: JwtAuthDep):
+    db_user: User = get_by_id(db, User, auth["id"])
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    return db_user
 
 
 @router.delete("/v1/users/me/", status_code=status.HTTP_204_NO_CONTENT)

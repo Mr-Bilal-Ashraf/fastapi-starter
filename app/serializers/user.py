@@ -9,9 +9,9 @@ class UserResponseSer(BaseModel):
     email: EmailStr
     first_name: str
     last_name: str
-    date_of_birth: str = None
-    profile_picture: str = None
-    last_login: datetime = None
+    date_of_birth: str | None 
+    profile_picture: str | None
+    last_login: datetime | None
     is_active: bool
     is_superuser: bool
     date_joined: datetime
@@ -44,5 +44,3 @@ class UserForgotPasswordSer(UserActivateSer):
 
 class ValidateTwoFactorSer(UserActivateSer):
     pass
-
-
