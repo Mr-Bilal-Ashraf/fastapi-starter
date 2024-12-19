@@ -121,6 +121,8 @@ async def login(db: SessionDep, user: UserLoginSer, bg_tasks: BackgroundTasks):
         "first_name": db_user.first_name,
         "last_name": db_user.last_name,
     }
+    db_user.last_login = datetime.now(timezone.utc)
+    db_commit(db)
     access_token = access_security.create_access_token(subject=subject)
     refresh_token = refresh_security.create_refresh_token(subject=subject)
 
@@ -204,6 +206,8 @@ async def validate_two_factor(db: SessionDep, data: ValidateTwoFactorSer):
     if otp_result != 1:
         raise HTTPException(status_code=400, detail=otp_message)
 
+    db_user.last_login = datetime.now(timezone.utc)
+    db_commit(db)
     subject = {
         "id": db_user.id,
         "first_name": db_user.first_name,
@@ -275,3 +279,11 @@ async def delete_user(db: SessionDep, auth: JwtAuthDep):
     db_user.deleted = True
     db_commit(db)
     return None
+
+
+# Update Profile
+# change email
+# logout
+# logout from all devices
+# account locking in case of multiple failed login attempts (it can be a brute force attack)
+# User activity log (login history, IP addresses, login times, password resets)
