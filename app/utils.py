@@ -14,7 +14,7 @@ from uuid import uuid4
 
 from mailjet_rest import Client
 
-PROFILE_PICTURE_DIR = Path("media/profile_pictures")
+PROFILE_PICTURE_DIR = Path("./app/static/profile_pictures/")
 PROFILE_PICTURE_DIR.mkdir(parents=True, exist_ok=True)
 
 
