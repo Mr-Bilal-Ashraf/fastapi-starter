@@ -20,6 +20,7 @@ from app.serializers.user import (
     ValidateTwoFactorSer,
     UserResponseSer,
     UserActivateSer,
+    UpdateEmailSer,
     UserCreateSer,
     UserLoginSer,
 )
@@ -28,6 +29,7 @@ from app.utils import (
     account_activation_email,
     two_factor_token_email,
     save_profile_picture,
+    update_email,
     get_by_id,
     db_commit,
 )
@@ -274,7 +276,7 @@ async def my_profile(db: SessionDep, auth: JwtAuthDep):
     return db_user
 
 
-@router.put("/v1/users/me/", response_model=UserResponseSer)
+@router.patch("/v1/users/me/", response_model=UserResponseSer)
 async def update_user(
     db: SessionDep,
     auth: JwtAuthDep,
@@ -309,6 +311,28 @@ async def update_user(
     return db_user
 
 
+@router.patch("/v1/users/change_email/", status_code=status.HTTP_200_OK)
+async def change_email(db: SessionDep, auth: JwtAuthDep, data: UpdateEmailSer):
+    db_user: User = get_by_id(db, User, auth["id"])
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    if not data.otp:
+        update_email(db, db_user, data.email)
+        return {"detail": f"An OTP is sent to {data.email}."}
+
+    otp_result, otp_message = OTP.verify_otp(db, db_user, data.otp, v_type=OTPChoices.UPDATE_EMAIL)
+    if otp_result != 1:
+        raise HTTPException(status_code=400, detail=otp_message)
+
+    # org_email = db_user.email
+    # You can send an aknowleding email to previous email
+    db_user.email = data.email
+    db_commit(db)
+    return db_user
+
+
 @router.delete("/v1/users/me/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(db: SessionDep, auth: JwtAuthDep):
     db_user: User = get_by_id(db, User, auth["id"])
@@ -328,7 +352,6 @@ async def delete_user(db: SessionDep, auth: JwtAuthDep):
     return None
 
 
-# change email
 # logout
 # logout from all devices
 # account locking in case of multiple failed login attempts (it can be a brute force attack)

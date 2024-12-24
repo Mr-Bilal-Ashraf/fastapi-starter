@@ -35,7 +35,7 @@ class UserLoginSer(BaseModel):
 
 class UserActivateSer(BaseModel):
     email: EmailStr = Field(min_length=15, max_length=70)
-    otp: str
+    otp: str | int
 
 
 class UserForgotPasswordSer(UserActivateSer):
@@ -44,3 +44,8 @@ class UserForgotPasswordSer(UserActivateSer):
 
 class ValidateTwoFactorSer(UserActivateSer):
     pass
+
+
+class UpdateEmailSer(BaseModel):
+    email: EmailStr = Field(min_length=15, max_length=70)
+    otp: str | int | None = None
