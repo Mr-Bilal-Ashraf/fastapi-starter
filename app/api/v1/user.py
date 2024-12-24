@@ -1,7 +1,18 @@
-from fastapi import APIRouter, BackgroundTasks, Body, HTTPException, Security, status
+from fastapi import (
+    BackgroundTasks,
+    HTTPException,
+    UploadFile,
+    APIRouter,
+    Security,
+    status,
+    Form,
+    Body,
+    File,
+)
 from fastapi.responses import JSONResponse
 
 from pydantic import EmailStr
+from typing import Optional
 
 from app.dependencies import JwtAuthDep, SessionDep, access_security, refresh_security
 from app.serializers.user import (
@@ -16,6 +27,7 @@ from app.utils import (
     email_forgot_password_token,
     account_activation_email,
     two_factor_token_email,
+    save_profile_picture,
     get_by_id,
     db_commit,
 )
@@ -26,7 +38,7 @@ from app.config import settings
 
 from fastapi_jwt import JwtAuthorizationCredentials
 
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 
 router = APIRouter()
 
@@ -262,6 +274,41 @@ async def my_profile(db: SessionDep, auth: JwtAuthDep):
     return db_user
 
 
+@router.put("/v1/users/me/", response_model=UserResponseSer)
+async def update_user(
+    db: SessionDep,
+    auth: JwtAuthDep,
+    first_name: Optional[str] = Form(None),
+    last_name: Optional[str] = Form(None),
+    date_of_birth: Optional[str] = Form(None),
+    profile_picture: Optional[UploadFile] = File(None),
+):
+    db_user: User = get_by_id(db, User, auth["id"])
+    if not db_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+        )
+    db_user.last_name = last_name if last_name else db_user.last_name
+    db_user.first_name = first_name if first_name else db_user.first_name
+    if date_of_birth:
+        try:
+            db_user.date_of_birth = date.fromisoformat(date_of_birth)
+        except:
+            raise HTTPException(
+                status_code=400, detail="Invalid date format. Use YYYY-MM-DD."
+            )
+    if profile_picture:
+        try:
+            db_user.profile_picture = save_profile_picture(profile_picture)
+        except Exception as e:
+            raise HTTPException(
+                status_code=500, detail=f"Error saving profile picture: {str(e)}"
+            )
+
+    db_commit(db)
+    return db_user
+
+
 @router.delete("/v1/users/me/", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_user(db: SessionDep, auth: JwtAuthDep):
     db_user: User = get_by_id(db, User, auth["id"])
@@ -281,7 +328,6 @@ async def delete_user(db: SessionDep, auth: JwtAuthDep):
     return None
 
 
-# Update Profile
 # change email
 # logout
 # logout from all devices

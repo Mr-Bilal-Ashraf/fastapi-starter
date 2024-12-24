@@ -1,4 +1,4 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 
 from sqlalchemy.orm import Session
 from app.models.base import Base
@@ -9,8 +9,13 @@ from app.models.base import OTP
 from app.config import settings
 
 from random import randint
+from pathlib import Path
+from uuid import uuid4
 
 from mailjet_rest import Client
+
+PROFILE_PICTURE_DIR = Path("media/profile_pictures")
+PROFILE_PICTURE_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def generate_unique_token(db: Session):
@@ -81,6 +86,16 @@ def two_factor_token_email(db: Session, user: User):
     name = f"{user.first_name}{' ' + user.last_name if user.last_name else ''}"
     body = f"Hi {name}, Use this OTP: {otp} to pass through Two-Factor Authentication (2FA). This OTP is valid for next 2 mins."
     return send_email(user.email, subject, body)
+
+
+def save_profile_picture(file: UploadFile) -> str:
+    unique_filename = f"{uuid4().hex}_{file.filename}"
+    file_location = PROFILE_PICTURE_DIR / unique_filename
+    
+    with open(file_location, "wb") as buffer:
+        buffer.write(file.file.read())
+
+    return str(file_location)
 
 
 # ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓ DB Utilities ↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓↓

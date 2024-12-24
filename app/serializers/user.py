@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, EmailStr
 
-from datetime import datetime
+from datetime import date, datetime
 
 
 class UserResponseSer(BaseModel):
@@ -9,7 +9,7 @@ class UserResponseSer(BaseModel):
     email: EmailStr
     first_name: str
     last_name: str
-    date_of_birth: str | None 
+    date_of_birth: date | None 
     profile_picture: str | None
     last_login: datetime | None
     is_active: bool
