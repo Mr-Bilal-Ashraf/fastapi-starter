@@ -88,6 +88,14 @@ def two_factor_token_email(db: Session, user: User):
     return send_email(user.email, subject, body)
 
 
+def update_email(db: Session, user: User, email: str):
+    otp = create_otp(db, user.id, OTPChoices.UPDATE_EMAIL)
+    subject = "Your FastAPI Update Email Token..."
+    name = f"{user.first_name}{' ' + user.last_name if user.last_name else ''}"
+    body = f"Hi {name}, Use this OTP: {otp} to update your email. This OTP is valid for next 2 mins."
+    return send_email(email, subject, body)
+
+
 def save_profile_picture(file: UploadFile) -> str:
     unique_filename = f"{uuid4().hex}_{file.filename}"
     file_location = PROFILE_PICTURE_DIR / unique_filename
